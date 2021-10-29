@@ -17,15 +17,15 @@ int main(int argc, char *argv[]) {
       return -1;
    }
 
-   add = (FUNC_TYPE)dlsym(handler, "add");
-   sub = (FUNC_TYPE)dlsym(handler, "sub");
-   mul = (FUNC_TYPE)dlsym(handler, "mul");
-   div = (FUNC_TYPE)dlsym(handler, "div");
+   // add = (FUNC_TYPE)dlsym(handler, "add");
+   // sub = (FUNC_TYPE)dlsym(handler, "sub");
+   // mul = (FUNC_TYPE)dlsym(handler, "mul");
+   // div = (FUNC_TYPE)dlsym(handler, "div");
 
-   if (!add || !sub || !mul || !div) {
-      printf("dlsym failed.\n");
-      return -1;
-   }
+   // if (!add || !sub || !mul || !div) {
+   //    printf("dlsym failed.\n");
+   //    return -1;
+   // }
 
    int a = 5, b = 2;
    // printf("add(%d, %d) = %d\n", a, b, add(a,b));
