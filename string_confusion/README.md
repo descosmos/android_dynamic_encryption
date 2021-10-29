@@ -14,6 +14,7 @@ adb push ./build/libcaculator.so /data/local/tmp
 adb shell chmod 777 main
 adb shell chmod 777 minidl_encrypt
 
+# enter phone terminal
 adb shell
 > phone: cd /data/local/tmp
 > phone: ./minidl_encrypt libcaculator.so
