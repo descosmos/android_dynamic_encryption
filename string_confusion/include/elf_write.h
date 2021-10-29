@@ -70,13 +70,19 @@ public:
             //  Encrypt
             const char* shdr_name = (const char*)reader_->shstrtab_ + shdr.sh_name;
             if (strcmp(shdr_name, ".rodata") == 0) {
-                encryptRodataSection(static_cast<char*>(buffer), buffer_size);
-                LOGI("-----------------------");
+                LOGI("\n-----------------------1\n");
                 char *buf = static_cast<char*>(buffer);
                 for (size_t i = 0; i < buffer_size; ++i) {
                     printf("%c", buf[i]);
                 }
-                LOGI("-----------------------");
+                LOGI("\n-----------------------1\n");
+                encryptRodataSection(static_cast<char*>(buffer), buffer_size);
+                LOGI("\n-----------------------2\n");
+                buf = static_cast<char*>(buffer);
+                for (size_t i = 0; i < buffer_size; ++i) {
+                    printf("%c", buf[i]);
+                }
+                LOGI("\n-----------------------2\n");
                 printf("\n");
             }
 
