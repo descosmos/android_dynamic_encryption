@@ -18,13 +18,20 @@ extern "C"{
     
     __attribute__((constructor)) void output_1() {
         char *str = "Hello from init_arry(1).\n";
-        
+        // printf("..................\n");
         size_t str_len = strlen(str);
 
         //  修改段属性
         size_t page_start, page_end;
         ret_page_address(&page_start, &page_end);
         size_t page_size = page_end - page_start;
+
+        // while (true) {
+        //     printf("%d\n", getpid());
+        //     printf("page_start: 0x%lx     page_end: 0x%lx\n", page_start, page_end);
+        //     sleep(1);
+        // }
+        
         char *page_adress = (char*)(page_start);
 
         if (mprotect(page_adress, page_size, PROT_READ | PROT_WRITE | PROT_EXEC) == -1) {
@@ -33,11 +40,18 @@ extern "C"{
         }
         // printf("mprotect success.\n");
 
-        printf("before encrypted str: %s\n", str);
+        size_t offset = str - page_adress;
+
+        // printf("before encrypted str: %s\n", str);
+
         for (int i = 0; i <= str_len; ++i) {
-            str[i] ^= 0xff;
+            if (*(page_adress+offset+i) != 0) {
+                *(page_adress + offset + i) = *(page_adress + offset + i) ^ 0xff;
+            }
         }
-        printf("after encrypted str: %s\n", str);
+        // memcpy((void*)str, (void*)str, str_len-1);
+        // printf("after encrypted str: %s\n", str);
+        printf("%s\n", str);
 
         mprotect(page_adress, page_size, PROT_READ | PROT_EXEC);
     }
@@ -46,79 +60,29 @@ extern "C"{
         printf("Hello from init_arry(2).\n");
     }
 
-    size_t htoi(char *s) {
-        size_t i;
-        size_t n = 0;
-        if (s[0] == '0' && (s[1]=='x' || s[1]=='X')) {
-            i = 2;
-        } else {
-            i = 0;
-        }
-        
-        for (; (s[i] >= '0' && s[i] <= '9') || (s[i] >= 'a' && s[i] <= 'z') || (s[i] >='A' && s[i] <= 'Z');++i) {
-            if (tolower(s[i]) > '9') {
-                n = 16 * n + (10 + tolower(s[i]) - 'a');
-            } else {
-                n = 16 * n + (tolower(s[i]) - '0');
-            }
-        }
-        return n;
-    }
 
     void ret_page_address(size_t *page_start, size_t *page_end) {
-        pid_t pid = getpid();
-        if (pid == -1) {
-            printf("getpid failed.\n");
-            return;
-        }
-        printf("ret_page_start\n");
-        char file[30] = {0};
-        sprintf(file, "/proc/%d/maps", pid);
-        printf("file: %s\n", file);
+        char file_path[32] = {0};
+        char file_line[1024] = {0};
+        FILE *fp = NULL;
 
-        FILE *fp = fopen(file, "r+");
-        if (fp == nullptr) {
-            printf("fopen failed.\n");
-            return;
-        }
+        sprintf(file_path, "/proc/self/maps");
 
-        char address[20] = {0};
-        char so_name[30] = {0};
-        int flags;
+        fp = fopen(file_path, "r+");
 
-        //  移动文件指针，得到 libcaculator.so 的首地址
-        //  TODO: /proc/pid/maps 文件中 映射文件所属节点号 对应 flags 为0 的时候会出现问题，需注意
-        while (true) {
-            fscanf(fp, "%s%*s%*s%*s%d", address, &flags);
-            printf("----- flags: %d.\n", flags);
-            if (flags != 0) {
-                fscanf(fp, "%s", so_name);
-                if (strcmp("/data/local/tmp/libcaculator.so", so_name) == 0) {
+        if (fp != NULL) {
+            while (fgets(file_line, 1023, fp) != NULL) {
+                if (strstr(file_line, "/data/local/tmp/libcaculator.so") || strstr(file_line, "/data/local/tmp/libcaculator.ss.so")) {
+                    char *token = strtok(file_line, "-");
+                    *page_start = strtoul(token, NULL, 16);
+
+                    token = strtok(NULL, "-");
+                    *page_end = strtoul(token, NULL, 16);
                     break;
                 }
             }
         }
 
-        char start[16] = {0};
-        char end[16] = {0};
-        printf("address: %s\n", address);
-        printf("so_name: %s\n", so_name);
-
-        //  获得so段的入口地址以及结束地址
-        char *delimiter = strstr(address, "-");
-        printf("delimiter: %s\n", delimiter);
-        strncpy(start, address, 8);
-        strncpy(end, delimiter+1, 8);
-        printf("start: %s\n", start);
-        printf("end: %s\n", end);
-
-        //  将十六进制数字字符串转成无符号长整数
-        *page_start = htoi(start);
-        *page_end = htoi(end);
-        printf("*page_start: %lu\n", *page_start);
-        printf("*page_end: %lu\n", *page_end);
-
-        // FILE *fd = fopen("/", "r+");
     }
 
     // volatile int add(int a, int b) {

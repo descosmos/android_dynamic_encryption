@@ -70,20 +70,20 @@ public:
             //  Encrypt
             const char* shdr_name = (const char*)reader_->shstrtab_ + shdr.sh_name;
             if (strcmp(shdr_name, ".rodata") == 0) {
-                LOGI("\n-----------------------1\n");
-                char *buf = static_cast<char*>(buffer);
-                for (size_t i = 0; i < buffer_size; ++i) {
-                    printf("%c", buf[i]);
-                }
-                LOGI("\n-----------------------1\n");
+                // LOGI("\n-----------------------1\n");
+                // char *buf = static_cast<char*>(buffer);
+                // for (size_t i = 0; i < buffer_size; ++i) {
+                //     printf("%c", buf[i]);
+                // }
+                // LOGI("\n-----------------------1\n");
                 encryptRodataSection(static_cast<char*>(buffer), buffer_size);
-                LOGI("\n-----------------------2\n");
-                buf = static_cast<char*>(buffer);
-                for (size_t i = 0; i < buffer_size; ++i) {
-                    printf("%c", buf[i]);
-                }
-                LOGI("\n-----------------------2\n");
-                printf("\n");
+                // LOGI("\n-----------------------2\n");
+                // buf = static_cast<char*>(buffer);
+                // for (size_t i = 0; i < buffer_size; ++i) {
+                //     printf("%c", buf[i]);
+                // }
+                // LOGI("\n-----------------------2\n");
+                // printf("\n");
             }
 
             // LOGD("cur_pos=0x%llx, offset_gap=%lld", cur_pos, offset_gap);
@@ -126,15 +126,30 @@ private:
         size_t i = 0;
         while (i < buffer_size) {
             size_t Len = strlen(buffer);
-            
-            if (strcmp(reader_->name_.c_str(), buffer) != 0){
+            printf("buffer: %s\n", buffer);
+            // for (size_t j = 0; j < Len; j++) {
+            //     printf("%c", buffer[j]);
+            // }
+            // printf("------\n");
+
+            if (strcmp(reader_->name_.c_str(), buffer) != 0 && 
+                strcmp("/proc/self/maps", buffer) != 0 && 
+                strcmp("r+", buffer) != 0 &&
+                strcmp("/data/local/tmp/libcaculator.so", buffer) != 0 &&
+                strcmp("/data/local/tmp/libcaculator.ss.so", buffer) != 0 &&
+                strcmp("mprotect success.\n", buffer) != 0 &&
+                strcmp("-", buffer) != 0 && 
+                strcmp("%s\n", buffer) != 0) {
                 for (size_t j = 0; j < Len; j++) {
-                    buffer[j] ^= 0xFF;
+                    // printf("%c", buffer[j]);
+                    if (buffer[j] != 0) {
+                        buffer[j] ^= 0xFF;
+                    }
                 }
             }
-            buffer += (Len + 2);
+            buffer += (Len + 1);
 
-            i += (Len+2);
+            i += (Len + 1);
         }
         
         // for (size_t i = 0; i < buffer_size; ++i) {
