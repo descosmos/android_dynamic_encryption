@@ -15,10 +15,11 @@
 extern "C"{
     size_t htoi(char *s);
     void ret_page_address(size_t *page_start, size_t *page_end);
+    void get_string_info(char *start, size_t *len, size_t start_pos);
+    void decrypt(char *ro_data_start);
     
     __attribute__((constructor)) void output_1() {
         char *str = "Hello from init_arry(1).\n";
-        // printf("..................\n");
         size_t str_len = strlen(str);
 
         //  修改段属性
@@ -40,15 +41,16 @@ extern "C"{
         }
         // printf("mprotect success.\n");
 
-        size_t offset = str - page_adress;
-
         // printf("before encrypted str: %s\n", str);
 
-        for (int i = 0; i <= str_len; ++i) {
-            if (*(page_adress+offset+i) != 0) {
-                *(page_adress + offset + i) = *(page_adress + offset + i) ^ 0xff;
-            }
-        }
+        decrypt(str);
+
+        // size_t offset = str - page_adress;
+        // for (int i = 0; i <= str_len; ++i) {
+        //     if (*(page_adress+offset+i) != 0) {
+        //         *(page_adress + offset + i) = *(page_adress + offset + i) ^ 0xff;
+        //     }
+        // }
         // memcpy((void*)str, (void*)str, str_len-1);
         // printf("after encrypted str: %s\n", str);
         printf("%s\n", str);
@@ -62,11 +64,9 @@ extern "C"{
 
 
     void ret_page_address(size_t *page_start, size_t *page_end) {
-        char file_path[32] = {0};
+        const char file_path[32] = "/proc/self/maps";
         char file_line[1024] = {0};
         FILE *fp = NULL;
-
-        sprintf(file_path, "/proc/self/maps");
 
         fp = fopen(file_path, "r+");
 
@@ -83,6 +83,59 @@ extern "C"{
             }
         }
 
+    }
+
+    /**
+     * 1. 加密字符串以 -1 结尾，
+     * 2. 未加密字符串以 0 结尾。
+    */
+    void get_string_info(char *start, size_t *len, size_t start_pos) {
+        size_t i = 0;
+
+        while (1) {
+            if (start[start_pos+i] == 0) {
+                *len = i;
+                break;
+            }
+            else if (start[start_pos+i] == 255){
+                *len = i;
+                break;
+            }
+            else {
+                i++;
+            }
+        }
+    }
+
+    /**
+     * 1. 当接连出现两个 0 时，标志字符串已经全部解密结束
+     * 2. 当出现一个0或者-1时，标志着当前一个字符串已经结束
+    */
+    void decrypt(char *ro_data_start) {
+        size_t pos = 0;
+        size_t str_len = 0;
+
+        int is_end = 0;
+
+        while (1) {
+            if (is_end) {
+                break;
+            }
+
+            if (ro_data_start[pos] == 0 && ro_data_start[pos+1] == 0) {
+                is_end = 1;
+                break;
+            }
+
+            get_string_info(ro_data_start, &str_len, pos);
+            for (size_t i = 0; i < str_len + 1; ++i) {
+                if (ro_data_start[pos+i] > 127) {
+                    ro_data_start[pos+i] ^= 0xff;
+                }
+            }
+
+            pos += str_len + 1;
+        }
     }
 
     // volatile int add(int a, int b) {

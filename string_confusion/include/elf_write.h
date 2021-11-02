@@ -139,12 +139,12 @@ private:
                 strcmp("/data/local/tmp/libcaculator.ss.so", buffer) != 0 &&
                 strcmp("mprotect success.\n", buffer) != 0 &&
                 strcmp("-", buffer) != 0 && 
-                strcmp("%s\n", buffer) != 0) {
-                for (size_t j = 0; j < Len; j++) {
-                    // printf("%c", buffer[j]);
-                    if (buffer[j] != 0) {
-                        buffer[j] ^= 0xFF;
-                    }
+                strcmp("%s\n", buffer) != 0){
+                for (size_t j = 0; j < Len+1; j++) {
+                    // if (buffer[j] != 0) {
+                    //     buffer[j] ^= 0xFF;
+                    // }
+                    buffer[j] ^= 0xFF;
                 }
             }
             buffer += (Len + 1);
